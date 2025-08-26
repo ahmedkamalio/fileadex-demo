@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
+import type { LeadData } from "@/models/lead";
 
 // Mock CRM providers configuration
 const CRM_PROVIDERS = {
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
 
 // Mock CRM API call simulation
 async function simulateCRMAPICall(
-  lead: any,
+  lead: LeadData,
   provider: string,
   retryAttempt: number,
 ): Promise<void> {

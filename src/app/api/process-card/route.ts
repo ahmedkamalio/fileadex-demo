@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
 import { extractTextFromImage } from "@/lib/google-vision";
-
-interface LeadData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  job_title?: string;
-  website?: string;
-}
+import type { LeadData } from "@/models/lead";
 
 export async function POST(request: NextRequest) {
   try {

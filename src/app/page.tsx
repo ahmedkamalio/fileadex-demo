@@ -22,6 +22,7 @@ import {
   Clock,
   ExternalLink,
   Github,
+  AlertTriangle,
 } from "lucide-react";
 import axios, { isAxiosError } from "axios";
 
@@ -43,9 +44,18 @@ interface LeadData {
   created_at: string;
 }
 
+// Image validation configuration
+const IMAGE_CONFIG = {
+  MIN_WIDTH: 800,
+  MIN_HEIGHT: 600,
+  MAX_SIZE_MB: 10,
+  SUPPORTED_FORMATS: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+};
+
 export default function FileadxDemo() {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [steps, setSteps] = useState<ProcessingStep[]>([
     { name: "OCR Processing", status: "pending" },
     { name: "Data Cleaning", status: "pending" },
@@ -66,16 +76,80 @@ export default function FileadxDemo() {
     [],
   );
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const validateImage = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      // Check file type
+      if (!IMAGE_CONFIG.SUPPORTED_FORMATS.includes(file.type)) {
+        resolve(
+          `Unsupported format. Please use: ${IMAGE_CONFIG.SUPPORTED_FORMATS.join(
+            ", ",
+          )
+            .replace(/image\//g, "")
+            .toUpperCase()}`,
+        );
+        return;
+      }
+
+      // Check file size
+      const sizeInMB = file.size / (1024 * 1024);
+      if (sizeInMB > IMAGE_CONFIG.MAX_SIZE_MB) {
+        resolve(`File too large. Maximum size: ${IMAGE_CONFIG.MAX_SIZE_MB}MB`);
+        return;
+      }
+
+      // Check image dimensions
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+
+        if (
+          img.width < IMAGE_CONFIG.MIN_WIDTH ||
+          img.height < IMAGE_CONFIG.MIN_HEIGHT
+        ) {
+          resolve(
+            `Image resolution too low. Minimum: ${IMAGE_CONFIG.MIN_WIDTH}×${IMAGE_CONFIG.MIN_HEIGHT}px. Current: ${img.width}×${img.height}px`,
+          );
+        } else {
+          resolve(null); // Valid image
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve("Unable to read image file. Please try a different image.");
+      };
+
+      img.src = url;
+    });
+  };
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setResult(null);
-      setError(null);
-      setSteps((prev) =>
-        prev.map((step) => ({ ...step, status: "pending" as const })),
-      );
+    if (!selectedFile) return;
+
+    setValidationError(null);
+
+    // Validate the image
+    const validationResult = await validateImage(selectedFile);
+
+    if (validationResult) {
+      setValidationError(validationResult);
+      setFile(null);
+      event.target.value = ""; // Reset input
+      return;
     }
+
+    // Image is valid
+    setFile(selectedFile);
+    setResult(null);
+    setError(null);
+    setSteps((prev) =>
+      prev.map((step) => ({ ...step, status: "pending" as const })),
+    );
   };
 
   const processCard = async () => {
@@ -157,14 +231,27 @@ export default function FileadxDemo() {
             Smart Directory CRM Pipeline Demo
           </p>
           <p className="text-sm text-gray-500">
-            Built by Ahmed Kamal • Technical Test Submission
+            Built by{" "}
+            <a
+              href="https://github.com/ahmedkamalio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors"
+            >
+              Ahmed Kamal
+            </a>{" "}
+            • Technical Test Submission
           </p>
         </div>
 
         {/* GitHub Link */}
         <div className="flex justify-center">
           <Button variant="outline" className="gap-2" asChild>
-            <a href="#" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://github.com/ahmedkamalio/fileadex-demo"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Github className="w-4 h-4" />
               View Source Code
             </a>
@@ -180,8 +267,9 @@ export default function FileadxDemo() {
                 Upload Business Card
               </CardTitle>
               <CardDescription>
-                Upload any business card image to see the complete Fileadx
-                pipeline in action
+                Upload a high-quality business card image to see the complete
+                Fileadx pipeline in action. Minimum resolution:{" "}
+                {IMAGE_CONFIG.MIN_WIDTH}×{IMAGE_CONFIG.MIN_HEIGHT}px
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -190,7 +278,7 @@ export default function FileadxDemo() {
                   type="file"
                   id="file-upload"
                   className="hidden"
-                  accept="image/*"
+                  accept={IMAGE_CONFIG.SUPPORTED_FORMATS.join(",")}
                   onChange={handleFileSelect}
                   disabled={processing}
                 />
@@ -203,17 +291,40 @@ export default function FileadxDemo() {
                     Click to upload or drag and drop
                   </span>
                   <span className="text-xs text-gray-500">
-                    PNG, JPG, JPEG up to 10MB
+                    PNG, JPG, JPEG, WebP up to {IMAGE_CONFIG.MAX_SIZE_MB}MB
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Min: {IMAGE_CONFIG.MIN_WIDTH}×{IMAGE_CONFIG.MIN_HEIGHT}px
+                    for optimal OCR accuracy
                   </span>
                 </label>
               </div>
 
-              {file && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {validationError && (
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">
+                      Image Requirements Not Met
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      {validationError}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {file && !validationError && (
+                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <FileImage className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">{file.name}</span>
-                    <Badge variant="secondary">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-medium text-green-800">
+                      {file.name}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-700"
+                    >
                       {(file.size / 1024 / 1024).toFixed(1)}MB
                     </Badge>
                   </div>
@@ -222,7 +333,7 @@ export default function FileadxDemo() {
 
               <Button
                 onClick={processCard}
-                disabled={!file || processing}
+                disabled={!file || processing || !!validationError}
                 className="w-full"
                 size="lg"
               >
