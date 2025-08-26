@@ -1,3 +1,21 @@
+/**
+ * CRM Integration Mock API Routes
+ *
+ * Mock implementation of CRM synchronization endpoints for demo purposes.
+ * Simulates integration with major CRM platforms (HubSpot, Salesforce, Dynamics)
+ * with realistic API behavior including delays, failures, and rate limiting.
+ *
+ * Production Implementation Notes:
+ * - Replace mock functions with actual CRM API clients
+ * - Implement proper authentication (OAuth, API keys)
+ * - Add retry queues (Redis, AWS SQS) for failed syncs
+ * - Include webhook handling for bi-directional sync
+ *
+ * @module api/crm-sync
+ * @author Ahmed Kamal
+ * @since 1.0.0
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { LeadData } from "@/models/lead";
@@ -22,6 +40,10 @@ const CRM_PROVIDERS = {
   },
 };
 
+/**
+ * POST /api/crm-sync
+ * Synchronizes a lead to the specified CRM platform (mock implementation)
+ */
 export async function POST(request: NextRequest) {
   try {
     const {
@@ -79,7 +101,7 @@ export async function POST(request: NextRequest) {
       console.error("Failed to update lead with CRM info:", updateError);
     }
 
-    // Log the sync activity (in a real app, you'd have an audit table)
+    // Log the sync activity
     console.log(
       `Successfully synced lead ${leadId} to ${crmProvider} with CRM ID: ${crmId}`,
     );
@@ -94,14 +116,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("CRM sync error:", error);
 
-    // In a real app, implement retry logic here
+    // Basic retry logic simulation
     const shouldRetry =
       error instanceof Error &&
       error.message.includes("rate limit") &&
       request.json().then((body) => body.retryAttempt < 3);
 
     if (await shouldRetry) {
-      // Schedule retry (in a real app, use a queue like Bull or Agenda)
       console.log("Scheduling retry for CRM sync...");
       return NextResponse.json({
         success: false,
@@ -121,7 +142,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Mock CRM API call simulation
+/**
+ * Mock CRM API call with realistic behavior simulation
+ */
 async function simulateCRMAPICall(
   lead: LeadData,
   provider: string,
@@ -160,7 +183,10 @@ async function simulateCRMAPICall(
   });
 }
 
-// GET endpoint to check sync status
+/**
+ * GET /api/crm-sync?leadId=uuid
+ * Check CRM synchronization status for a specific lead
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

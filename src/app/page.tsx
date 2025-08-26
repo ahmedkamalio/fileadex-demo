@@ -23,8 +23,11 @@ import {
   ExternalLink,
   Github,
   AlertTriangle,
+  ArrowRight,
+  Download,
 } from "lucide-react";
 import axios, { isAxiosError } from "axios";
+import Link from "next/link";
 
 interface ProcessingStep {
   name: string;
@@ -245,16 +248,28 @@ export default function FileadxDemo() {
         </div>
 
         {/* GitHub Link */}
-        <div className="flex justify-center">
-          <Button variant="outline" className="gap-2" asChild>
+        <div className="flex justify-center space-x-2">
+          <Button variant="outline" asChild>
             <a
               href="https://github.com/ahmedkamalio/fileadex-demo"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Github className="w-4 h-4" />
+              <Github />
               View Source Code
             </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/demo-business-card.jpg" download="demo-business-card.jpg">
+              <Download />
+              Download Demo Card
+            </a>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/leads">
+              See Leads Dashboard
+              <ArrowRight />
+            </Link>
           </Button>
         </div>
 

@@ -102,13 +102,13 @@ export default function LeadsDashboard() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchLeads} disabled={loading}>
               <RefreshCw
-                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
               />
               Refresh
             </Button>
             <Button asChild>
               <Link href="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4" />
                 Back to Upload
               </Link>
             </Button>
