@@ -1,0 +1,54 @@
+# Production-focused Supabase configuration for Fileadx Demo
+# This config disables local development services since we're using production Supabase directly
+project_id = "env(SUPABASE_PROJECT_ID)"
+
+# Disable local API since we're using production
+[api]
+enabled = false
+
+# Disable local database since we're using production
+[db]
+
+# Keep migrations enabled for schema management
+[db.migrations]
+enabled = true
+schema_paths = []
+
+# Disable database seeding for production
+[db.seed]
+enabled = false
+
+# Disable local realtime
+[realtime]
+enabled = false
+
+# Disable local Studio since we'll use production dashboard
+[studio]
+enabled = false
+
+# Disable local email testing
+[inbucket]
+enabled = false
+
+# Disable local storage
+[storage]
+enabled = false
+
+# Disable local auth since we're using production
+[auth]
+enabled = false
+
+# Keep edge runtime enabled for potential future use
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+deno_version = 2
+
+# Disable local analytics
+[analytics]
+enabled = false
+
+# Keep experimental features disabled
+[experimental]
+orioledb_version = ""
